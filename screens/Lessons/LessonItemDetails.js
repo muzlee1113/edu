@@ -51,6 +51,7 @@ export default class LessonItemDetails extends React.Component {
         const { navigation } = this.props;
         const lessonId = navigation.getParam('_id', 'NO-ID');
         const lessonName = navigation.getParam('title', '未命名课程');
+        const classId = navigation.getParam('class', '未命名班级');
         // const activities = navigation.getParam('activities', [])
         console.log("===============")
         // console.log(activities)
@@ -86,7 +87,7 @@ export default class LessonItemDetails extends React.Component {
                         onPress={() => {
                             /* 1. Navigate to the Details route with params */
                             console.log("lesson start")
-                            navigation.navigate("StartLessonScreen", {lessonId: lessonId, lessonName: lessonName});
+                            navigation.navigate("LessonStartLesson", {lessonId: lessonId, lessonName: lessonName, classId: classId});
                         }}
                     />
                     <ListItem
@@ -101,7 +102,7 @@ export default class LessonItemDetails extends React.Component {
                         onPress={() => {
                             /* 1. Navigate to the Details route with params */
                             console.log("lesson reply")
-                            navigation.navigate("ReplyLessonScreen", {lessonId: lessonId, lessonName: lessonName});
+                            navigation.navigate("LessonReplyLesson", {lessonId: lessonId, lessonName: lessonName, classId: classId});
                         }}
                     />
                 </View>

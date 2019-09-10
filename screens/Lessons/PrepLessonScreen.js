@@ -90,7 +90,7 @@ export default class prepLessonScreen extends React.Component {
           titleName='title'
           listIcon='palette'
           items={this.state.activities}
-          navigation={this.props.navigation}
+          navigation={navigation}
           pageModel="ActivityItemDetails"
         />
         <Button

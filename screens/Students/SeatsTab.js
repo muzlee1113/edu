@@ -31,38 +31,7 @@ export default class SeatsTab extends React.Component {
         // this.assignStudent()
     }
 
-    // assignStudent=()=>{
-    //     console.log("EMPTY SEATSMAPDATA!!! EMPTY SEATSMAPDATA!!!! EMPTY SEATSMAPDATA!!!!")
-    //     const seatsMapData = [...this.props.seatsMap];
-    //            // old data
-    //     console.log("==================start assigning==========")
-    //     this.props.students.forEach(student=>{
-    //         if(student.hasOwnProperty('seat')){
-    //             // student info object
-    //             let updatedSeatObj = {
-    //                 studentName: student.name, 
-    //                 studentId: student._id
-    //             }
-                
-    //             let {rowIndex, seatIndex} = student.seat
-    //             seatsMapData[rowIndex].splice(seatIndex,1,{...updatedSeatObj})
-    //             console.log("================== assign a student ==========")
-    //             console.log(student)
-    //             console.log("================== to ==========")
-    //             console.log(student.seat)
-    //         }
-    //     })
-    //     // set state so change the dom
-    //     this.setState({
-    //         seatsMapData: [...seatsMapData],
-    //     },()=>{
-    //         console.log('seatsMapData has been changed')
-    //         console.log(this.state.seatsMapData)
-    //         console.log('seatsMap should be the same')
-    //         console.log(this.state.seatsMap)
-    //     })
-    // }
-
+   
 
     touchEventHandler=(rowIndex, seatIndex)=>{
         // let studentIndex = this.state.onScreenStudentIndex

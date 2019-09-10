@@ -24,14 +24,9 @@ import Title from '../../components/Title';
 export default class ActivityItemDetails extends React.Component {
     static navigationOptions = ({ navigation }) => {
         return {
-            headerBackTitle: navigation.getParam('title', 'NO-NAME'),
-            // headerStyle: {
-            //     borderBottomWidth: 0,
-            //     shadowColor: 'transparent'
-            // },
             headerRight: (
                 <Button
-                  title="设置"
+                  title="编辑"
                   type='clear'
                   titleStyle={{ fontSize: 16 }}
                   onPress={()=>{
@@ -49,14 +44,25 @@ export default class ActivityItemDetails extends React.Component {
     render() {
         /* 2. Get the param, provide a fallback value if not available */
         const { navigation } = this.props;
-        const activityId = navigation.getParam('_id', 'NO-ID');
-        const activityName = navigation.getParam('title', '未命名课程');
+        console.log("here is in activity details screen, following is the navigation props")
+        // console.log(navigation)
+        const activity = navigation.state.params;
+        console.log(activity)
+        const {title, duration, assessment, rubrics_name} = activity
         // const activities = navigation.getParam('activities', [])
         console.log("===============")
         // console.log(activities)
         return (
             <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-                <Text>Hello from activity details for {activityName}({activityId})</Text>
+                <View style={{marginTop: 16}}>
+                <Title text={title}/>
+                <Text style={styles.contentText}>活动时长: {Math.floor(duration/60)}小时{duration%60}分</Text>
+                <Text style={styles.contentText}>评估方式: {assessment['type']==='score'?('基于总分'):(assessment['type']==='level'?('基于级别'):(assessment['type']==='rubrics'?('基于多维评估标准'):('不评分')))}</Text>
+                {assessment['type']==='score'?(<Text style={styles.contentText}>总分: {assessment['total']}分</Text>)
+                :(assessment['type']==='level'?(<Text style={styles.contentText}>级别: {assessment['total']}级</Text>)
+                :(assessment['type']==='rubrics'?(<Text style={styles.contentText}>评估标准: {rubrics_name}({assessment['rubrics_id']})</Text>)
+                :(<></>)))}     
+            </View>
             </ScrollView>
         );
     }
@@ -82,5 +88,10 @@ const styles = StyleSheet.create({
     },
     contentContainer: {
         paddingTop: 16,
+    },
+    contentText:{
+        fontSize: 18,
+        marginVertical: 12
+        // color: '#e6e6e6'
     }
 })

@@ -53,7 +53,6 @@ export default class ClassItemDetails extends React.Component {
             students:[],
             seatsMap:[],
             loading: false,
-            refreshing: false,
 
         }
         this.updateIndex = this.updateIndex.bind(this)
@@ -131,9 +130,7 @@ export default class ClassItemDetails extends React.Component {
 
     updateIndex (selectedIndex) {
         this.setState({
-            selectedIndex: selectedIndex,
-            [selectedIndex==0?'studentLoading':'lessonLoading']:false,
-            [selectedIndex==0?'lessonLoading':'studentLoading']:true
+            selectedIndex: selectedIndex
         })
     }
 
@@ -186,9 +183,15 @@ export default class ClassItemDetails extends React.Component {
 
 
 const styles = StyleSheet.create({
-
-
-
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center'
+    },
+        horizontal: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        padding: 10
+    },
     //Original
     container: {
         flex: 1
