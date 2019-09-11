@@ -6,6 +6,7 @@ import {
   View,
   ActivityIndicator,
   RefreshControl,
+  Modal
 } from 'react-native';
 
 import { ListItem, Button, Badge } from 'react-native-elements';
@@ -24,6 +25,27 @@ import { Stitch, RemoteMongoClient } from "mongodb-stitch-react-native-sdk";
 import SeatsMap from '../../components/SeatsMap'
 // import StudentList from '../../components/InfoList';
 
+const Loader = props => {
+  const {
+    updateLoading
+  } = props;
+
+  return (
+    <Modal
+      transparent={true}
+      animationType={'none'}
+      visible={updateLoading}
+      onRequestClose={() => {console.log('close modal')}}>
+      <View style={styles.modalBackground}>
+        <View style={styles.activityIndicatorWrapper}>
+          <ActivityIndicator
+            animating={updateLoading} />
+        </View>
+      </View>
+    </Modal>
+  )
+}
+
 
 export default class startLessonScreen extends React.Component {
   static navigationOptions = ({ navigation }) => {
@@ -38,12 +60,14 @@ export default class startLessonScreen extends React.Component {
     super()
     this.state = {
       selectedIndex: 0,
-      applaud: true,
-      className: "",
+      isGood: true,
+      class:{},
+      lessonId:"",
       students: [],
       seatsMap: [],
       loading: false,
-
+      lessonPerformances:[],
+      updateLoading:false
     }
     this.updateIndex = this.updateIndex.bind(this)
   }
@@ -63,7 +87,7 @@ export default class startLessonScreen extends React.Component {
 
   loadData = () => {
     let classId = this.props.navigation.state.params['classId']
-
+    let lessonId = this.props.navigation.state.params['lessonId']
     const stitchAppClient = Stitch.defaultAppClient;
     const mongoClient = stitchAppClient.getServiceClient(
       RemoteMongoClient.factory,
@@ -75,10 +99,10 @@ export default class startLessonScreen extends React.Component {
     students
       .find({ class: classId })
       .asArray()
-      .then(docs => {
-        this.setState({ students: docs });
+      .then(data => {
+        this.setState({ students: data });
         console.log("find students with class Id " + classId)
-        // console.log(docs)
+        // console.log(data)
 
         // find seatMap
         console.log("loading seatsMap")
@@ -86,9 +110,10 @@ export default class startLessonScreen extends React.Component {
           .then((data) => {
             console.log('get class seatsMap with class Id' + classId)
             this.setState({
-              className: data['title'],
-              seatsMap: data['seatsMap'] || [],
-              loading: false
+              lessonId: lessonId,
+              class: data,
+            },()=>{
+              this.registerStudentsInLesson()
             })
           })
           .catch(err => {
@@ -98,8 +123,107 @@ export default class startLessonScreen extends React.Component {
       .catch(err => {
         console.warn(err);
       });
+  }
 
+  registerStudentsInLesson=()=>{
+    console.log("Start registering")
+    const stitchAppClient = Stitch.defaultAppClient;
+    const mongoClient = stitchAppClient.getServiceClient(
+      RemoteMongoClient.factory,
+      "mongodb-atlas"
+    );
+    const db = mongoClient.db("smartedu");
+    const lessonPerformances = db.collection("lessonPerformances");
+    const students = this.state.students
+    let count = 0
 
+      //check if the student has been registered
+      students.map((student,i)=>{
+        lessonPerformances
+        .findOne( { $and: [ 
+          { lesson_id: this.state.lessonId }, 
+          { student_id: student._id } 
+        ] } )
+        
+        .then(res=>{
+          console.log(res)
+          if(res){
+            console.log('registered')
+            count++
+            if(count===students.length){
+              console.log("++++++=======The End=========++++++")
+              this.updateLessonPerformances()   
+            }              
+          }else{
+            console.log('hasnt registered')
+            // registered the student
+            let newLessonPerformance = {
+              student_id: student._id,
+              lesson_id: this.state.lessonId,
+              attend: true,
+              goods: [],
+              bads: [],
+              comment_tags:[],
+              activity_performance:[],
+              comment:"" 
+            }
+            lessonPerformances
+            .insertOne({
+              ...newLessonPerformance
+            })
+            .then((data) => {
+              console.log("registered one student " + i + " successfully!")
+              console.log(data)
+              count++
+              if(count===students.length){
+                console.log("++++++=======The End=========++++++")
+                this.updateLessonPerformances()   
+              }   
+            })
+            .catch(err => {
+              console.log(err);
+            });
+          }
+        }).catch(err=>{
+          console.log(err)
+        })
+        
+      })   
+  }
+
+  updateLessonPerformances=()=>{
+    console.log("========Start updating performances==========")
+    const stitchAppClient = Stitch.defaultAppClient;
+    const mongoClient = stitchAppClient.getServiceClient(
+      RemoteMongoClient.factory,
+      "mongodb-atlas"
+    );
+    const db = mongoClient.db("smartedu");
+    const lessonPerformances = db.collection("lessonPerformances");
+    lessonPerformances
+    .find({ lesson_id: this.state.lessonId })
+    .asArray()
+    .then(data=>{
+      // const newLessonPerformances = []
+      // data.map((item=>{
+      //   let matchingStudentId = data.find( ({ student_id }) => student_id === item.student_id );
+      //   if(matchingStudentId){
+
+      //   }else{
+      //     newLessonPerformances.push(item)
+      //   }
+      // }))
+      console.log("========got data==========")
+      console.log(data)
+      this.setState({
+        lessonPerformances: data,
+        loading:false,
+        updateLoading:false
+      })
+    })
+    .catch(err=>{
+      console.log(err)
+    })
   }
 
   touchEventHandler = (rowIndex, seatIndex) => {
@@ -112,16 +236,69 @@ export default class startLessonScreen extends React.Component {
     })
   }
 
-  toggleApplaud=()=>{
+  toggleIsGood=()=>{
     this.setState({
-      applaud: !this.state.applaud
+      isGood: !this.state.isGood
     })
+  }
+
+  touchListHandler=(studentId)=>{
+    this.setState({
+      updateLoading: true
+    })
+    console.log('touch '+studentId)
+    const stitchAppClient = Stitch.defaultAppClient;
+    const mongoClient = stitchAppClient.getServiceClient(
+      RemoteMongoClient.factory,
+      "mongodb-atlas"
+    );
+    const db = mongoClient.db("smartedu");
+    const lessonPerformances = db.collection("lessonPerformances");
+    const timeStamp = new Date().getTime()
+    if(this.state.isGood){
+      lessonPerformances
+      
+      .findOneAndUpdate(
+        { $and: [ 
+          { lesson_id: this.state.lessonId }, 
+          { student_id: studentId } 
+        ] },  
+          {$push:{ goods:timeStamp}} 
+      ).then((res)=>{
+          console.log('update student '+studentId+' performance successfully: goods + 1 at ' + timeStamp)
+          console.log(res)
+          // update performance
+          this.updateLessonPerformances()   
+
+      }).catch(err => {
+          console.warn(err);
+      });
+    }else{
+      lessonPerformances
+      .findOneAndUpdate(
+        { $and: [ 
+          { lesson_id: this.state.lessonId }, 
+          { student_id: studentId } 
+        ] },  
+          {$push:{ bads:timeStamp}} 
+      ).then((res)=>{
+          console.log('update student '+studentId+' performance successfully: bads + 1 at ' + timeStamp)
+          console.log(res)
+           // update performance
+           this.updateLessonPerformances()   
+      }).catch(err => {
+          console.warn(err);
+      });
+    }
   }
 
 
 
   render() {
-    const { students, seatsMap, className } = this.state;
+    const { students, lessonPerformances } = this.state;
+    console.log("hello I'm rendering, now the lessonPerformances is")
+    console.log(lessonPerformances)
+    const { seatsMap, className } = this.state.class
     const classId = this.props.navigation.state.params['classId']
 
     // view tabs
@@ -134,6 +311,7 @@ export default class startLessonScreen extends React.Component {
         <ActivityIndicator size="small" color="#0000ff" />
       </View>
     ) : (<>
+        <Loader updateLoading={this.state.updateLoading}/>
         <ScrollView
           style={styles.container}
           refreshControl={
@@ -152,19 +330,23 @@ export default class startLessonScreen extends React.Component {
           {(selectedIndex === 0) ?
             (<>
             {students.map((student,i)=>{
+              console.log('=====the student id '+student._id )
+              const performance = lessonPerformances.find(performance =>performance['student_id'].toString()===student._id.toString());
+              console.log(performance)
+              const {goods, bads} = performance
               return (
                 <ListItem
                   Component={TouchableScale}
                   friction={90} //
                   tension={100} // These props are passed to the parent component (here TouchableScale)
                   activeScale={0.98} //
-                  rightElement={this.state.applaud?(<Badge value="1" status="error"/>):(<Badge value="1" status="primary"/>)}
+                  rightElement={this.state.isGood?(goods.length===0?(<></>):(<Badge value={goods.length} status="error"/>)):(bads.length===0?(<></>):(<Badge value={bads.length} status="primary"/>))}
                   containerStyle={styles.listContainerStyle}
                   key={i}
                   title={student.name}
                   titleStyle={styles.listItem}
                   // bottomDivider={true}
-                  onPress={()=>{console.log("press student" + student._id)}}
+                  onPress={()=>this.touchListHandler(student._id)}
                 />
               );
             })}
@@ -193,19 +375,18 @@ export default class startLessonScreen extends React.Component {
             
         </ScrollView>
         <ActionButton 
-          buttonColor={this.state.applaud?("rgba(228,79,80,1)"):("rgba(64,137,214,1)")}
+          buttonColor={this.state.isGood?("rgba(228,79,80,1)"):("rgba(64,137,214,1)")}
           position="right"
           renderIcon= {(active)=>{
             console.log("here is from renderIcon")
-            console.log(active)
-            if(this.state.applaud)
+            if(this.state.isGood)
             {
               return <Icon name="md-happy" style={styles.actionButtonIcon} />
             } else{
               return <Icon name="md-sad" style={styles.actionButtonIcon} />
             }
           }}
-          onPress={this.toggleApplaud}
+          onPress={this.toggleIsGood}
           >
             
         </ActionButton>
@@ -251,4 +432,20 @@ const styles = StyleSheet.create({
     height: 30,
     color: 'white',
   },
+  modalBackground: {
+    flex: 1,
+    alignItems: 'center',
+    flexDirection: 'column',
+    justifyContent: 'space-around',
+    backgroundColor: '#00000040'
+  },
+  activityIndicatorWrapper: {
+    backgroundColor: '#FFFFFF',
+    height: 100,
+    width: 100,
+    borderRadius: 10,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-around'
+  }
 });
