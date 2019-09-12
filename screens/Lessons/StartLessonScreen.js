@@ -23,28 +23,8 @@ import { Stitch, RemoteMongoClient } from "mongodb-stitch-react-native-sdk";
 
 // components
 import SeatsMap from '../../components/SeatsMap'
-// import StudentList from '../../components/InfoList';
-
-const Loader = props => {
-  const {
-    updateLoading
-  } = props;
-
-  return (
-    <Modal
-      transparent={true}
-      animationType={'none'}
-      visible={updateLoading}
-      onRequestClose={() => {console.log('close modal')}}>
-      <View style={styles.modalBackground}>
-        <View style={styles.activityIndicatorWrapper}>
-          <ActivityIndicator
-            animating={updateLoading} />
-        </View>
-      </View>
-    </Modal>
-  )
-}
+import Loader from '../../components/Loader'
+import CommentTagsModal from '../../components/CommentTagsModal'
 
 
 export default class startLessonScreen extends React.Component {
@@ -67,9 +47,11 @@ export default class startLessonScreen extends React.Component {
       seatsMap: [],
       loading: false,
       lessonPerformances:[],
-      updateLoading:false
+      updateLoading:false,
+      commentTagsModal: false
     }
     this.updateIndex = this.updateIndex.bind(this)
+    this.modal = React.createRef()
   }
 
   componentDidMount() {
@@ -226,9 +208,7 @@ export default class startLessonScreen extends React.Component {
     })
   }
 
-  touchEventHandler = (rowIndex, seatIndex) => {
-    console.log('touch student in row ' + rowIndex + ', seat ' + seatIndex)
-  }
+ 
 
   updateIndex (selectedIndex) {
     this.setState({
@@ -240,6 +220,10 @@ export default class startLessonScreen extends React.Component {
     this.setState({
       isGood: !this.state.isGood
     })
+  }
+
+  touchEventHandler = (rowIndex, seatIndex) => {
+    console.log('touch student in row ' + rowIndex + ', seat ' + seatIndex)
   }
 
   touchListHandler=(studentId)=>{
@@ -291,6 +275,33 @@ export default class startLessonScreen extends React.Component {
       });
     }
   }
+ 
+
+  longTouchEventHandler=(studentId)=>{
+    console.log(studentId)
+    this.setState({
+      commentTagsModal: true
+    })
+  }
+
+
+  // modal controller // uneffective
+  setModalRef = element=>{
+    this.modal = element
+  }
+
+
+  openModal = () => {
+    if (this.modal.current) {
+      this.modal.current.open();
+    }
+  }
+
+  closeModal = () => {
+    if (this.modal.current) {
+      this.modal.current.close();
+    }
+  }
 
 
 
@@ -311,7 +322,8 @@ export default class startLessonScreen extends React.Component {
         <ActivityIndicator size="small" color="#0000ff" />
       </View>
     ) : (<>
-        <Loader updateLoading={this.state.updateLoading}/>
+        <Loader loading={this.state.updateLoading}/>
+        <CommentTagsModal setModalRef={this.setModalRef}/>
         <ScrollView
           style={styles.container}
           refreshControl={
@@ -341,12 +353,14 @@ export default class startLessonScreen extends React.Component {
                   tension={100} // These props are passed to the parent component (here TouchableScale)
                   activeScale={0.98} //
                   rightElement={this.state.isGood?(goods.length===0?(<></>):(<Badge value={goods.length} status="error"/>)):(bads.length===0?(<></>):(<Badge value={bads.length} status="primary"/>))}
+                  leftIcon={ {name:'person'}}
                   containerStyle={styles.listContainerStyle}
                   key={i}
                   title={student.name}
                   titleStyle={styles.listItem}
                   // bottomDivider={true}
                   onPress={()=>this.touchListHandler(student._id)}
+                  onLongPress={()=>this.longTouchEventHandler(student.id)}
                 />
               );
             })}
@@ -381,9 +395,9 @@ export default class startLessonScreen extends React.Component {
             console.log("here is from renderIcon")
             if(this.state.isGood)
             {
-              return <Icon name="md-happy" style={styles.actionButtonIcon} />
+              return <Icon name="md-thumbs-up" style={styles.actionButtonIcon} />
             } else{
-              return <Icon name="md-sad" style={styles.actionButtonIcon} />
+              return <Icon name="md-thumbs-down" style={styles.actionButtonIcon} />
             }
           }}
           onPress={this.toggleIsGood}
@@ -431,21 +445,5 @@ const styles = StyleSheet.create({
     fontSize: 30,
     height: 30,
     color: 'white',
-  },
-  modalBackground: {
-    flex: 1,
-    alignItems: 'center',
-    flexDirection: 'column',
-    justifyContent: 'space-around',
-    backgroundColor: '#00000040'
-  },
-  activityIndicatorWrapper: {
-    backgroundColor: '#FFFFFF',
-    height: 100,
-    width: 100,
-    borderRadius: 10,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-around'
   }
 });
