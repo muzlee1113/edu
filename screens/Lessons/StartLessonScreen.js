@@ -9,7 +9,7 @@ import {
   Modal
 } from 'react-native';
 
-import { ListItem, Button, Badge } from 'react-native-elements';
+import { ListItem, Button, Badge, withBadge } from 'react-native-elements';
 import TouchableScale from 'react-native-touchable-scale'; // https://github.com/kohver/react-native-touchable-scale
 import LinearGradient from 'react-native-linear-gradient'; // Only if no expo
 import ActionButton from 'react-native-action-button';
@@ -48,10 +48,10 @@ export default class startLessonScreen extends React.Component {
       loading: false,
       lessonPerformances:[],
       updateLoading:false,
-      commentTagsModal: false
+      longPressedStudent: ""
     }
     this.updateIndex = this.updateIndex.bind(this)
-    this.modal = React.createRef()
+    this.modal = ""
   }
 
   componentDidMount() {
@@ -174,7 +174,6 @@ export default class startLessonScreen extends React.Component {
   }
 
   updateLessonPerformances=()=>{
-    console.log("========Start updating performances==========")
     const stitchAppClient = Stitch.defaultAppClient;
     const mongoClient = stitchAppClient.getServiceClient(
       RemoteMongoClient.factory,
@@ -186,17 +185,6 @@ export default class startLessonScreen extends React.Component {
     .find({ lesson_id: this.state.lessonId })
     .asArray()
     .then(data=>{
-      // const newLessonPerformances = []
-      // data.map((item=>{
-      //   let matchingStudentId = data.find( ({ student_id }) => student_id === item.student_id );
-      //   if(matchingStudentId){
-
-      //   }else{
-      //     newLessonPerformances.push(item)
-      //   }
-      // }))
-      console.log("========got data==========")
-      console.log(data)
       this.setState({
         lessonPerformances: data,
         loading:false,
@@ -222,15 +210,22 @@ export default class startLessonScreen extends React.Component {
     })
   }
 
-  touchEventHandler = (rowIndex, seatIndex) => {
-    console.log('touch student in row ' + rowIndex + ', seat ' + seatIndex)
+  touchEventHandler = (rowIndex, seatIndex, studentId) => {
+    // console.log('touch student in row ' + rowIndex + ', seat ' + seatIndex + ', student id is ' +studentId)
+    this.setState({
+      updateLoading:true
+    },()=>{this.recordPerformance(studentId)})
   }
 
   touchListHandler=(studentId)=>{
+    // console.log('touch '+studentId)
     this.setState({
-      updateLoading: true
-    })
-    console.log('touch '+studentId)
+      updateLoading:true
+    },()=>{this.recordPerformance(studentId)})
+    
+  }
+
+  recordPerformance=(studentId)=>{
     const stitchAppClient = Stitch.defaultAppClient;
     const mongoClient = stitchAppClient.getServiceClient(
       RemoteMongoClient.factory,
@@ -278,30 +273,51 @@ export default class startLessonScreen extends React.Component {
  
 
   longTouchEventHandler=(studentId)=>{
-    console.log(studentId)
+    // console.log(studentId)
+    // this.setState({
+    //   commentTagsModal: true
+    // })
     this.setState({
-      commentTagsModal: true
-    })
+      longPressedStudent: studentId
+    },()=>{this.modal.openModal()})
+    
   }
 
 
-  // modal controller // uneffective
-  setModalRef = element=>{
-    this.modal = element
+
+  selectTag=(studentId, tagId)=>{
+    console.log("send student Id and tag Id to the database")
+    console.log(studentId)
+    console.log(tagId)
+
   }
 
+  renderBadge=(studentId)=>{
 
-  openModal = () => {
-    if (this.modal.current) {
-      this.modal.current.open();
+    const {lessonPerformances} = this.state
+    // console.log(lessonPerformances)
+    const performance = lessonPerformances.find(performance =>performance['student_id'].toString()===studentId.toString())||{};
+    console.log(performance)
+    // console.log(performance.hasOwnProperty('goods'))
+
+    // const {goods, bads} = performance
+    if(this.state.isGood && performance.hasOwnProperty('goods')){
+      let goodsNum = performance['goods'].length
+      if(goodsNum>0){
+        return <Badge value={goodsNum} status="error" containerStyle={styles.mapBadge}/>
+      }
+    }else if(!this.state.isGood && performance.hasOwnProperty('bads')){
+      let badsNum = performance['bads'].length
+      if(badsNum>0){
+        return <Badge value={badsNum} status="primary" containerStyle={styles.mapBadge}/>
+      }
+    }
+    else{
+      return <></>
     }
   }
 
-  closeModal = () => {
-    if (this.modal.current) {
-      this.modal.current.close();
-    }
-  }
+
 
 
 
@@ -316,14 +332,13 @@ export default class startLessonScreen extends React.Component {
     const buttons = ['花名册','座位图']
     const { selectedIndex } = this.state
 
-
     return (this.state.loading ? (
       <View style={[styles.loadingContainer, styles.horizontal]}>
         <ActivityIndicator size="small" color="#0000ff" />
       </View>
     ) : (<>
         <Loader loading={this.state.updateLoading}/>
-        <CommentTagsModal setModalRef={this.setModalRef}/>
+        <CommentTagsModal ref={ el => {this.modal = el}} studentId={this.state.longPressedStudent} selectTag={this.selectTag}/>
         <ScrollView
           style={styles.container}
           refreshControl={
@@ -360,7 +375,7 @@ export default class startLessonScreen extends React.Component {
                   titleStyle={styles.listItem}
                   // bottomDivider={true}
                   onPress={()=>this.touchListHandler(student._id)}
-                  onLongPress={()=>this.longTouchEventHandler(student.id)}
+                  onLongPress={()=>this.longTouchEventHandler(student._id)}
                 />
               );
             })}
@@ -375,6 +390,10 @@ export default class startLessonScreen extends React.Component {
                     // seatsMapData={this.state.seatsMapData}
                     // seatNum = {this.state.seatNum}
                     touchEventHandler={this.touchEventHandler}
+                    inClass={true}
+                    isGood={this.state.isGood}
+                    renderBadge={this.renderBadge}
+                    longTouchEventHandler={this.longTouchEventHandler}
                   />
                 </View>)
               : (<><Text>
@@ -392,7 +411,6 @@ export default class startLessonScreen extends React.Component {
           buttonColor={this.state.isGood?("rgba(228,79,80,1)"):("rgba(64,137,214,1)")}
           position="right"
           renderIcon= {(active)=>{
-            console.log("here is from renderIcon")
             if(this.state.isGood)
             {
               return <Icon name="md-thumbs-up" style={styles.actionButtonIcon} />
@@ -445,5 +463,8 @@ const styles = StyleSheet.create({
     fontSize: 30,
     height: 30,
     color: 'white',
+  },
+  mapBadge:{
+    position: 'absolute', top: -4, right: -4 
   }
 });

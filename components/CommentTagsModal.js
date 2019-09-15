@@ -11,12 +11,18 @@ import commentTags from '../components/DummyCommentTags.json'
 
 export default class FixedContent extends React.Component {
 
-//   modal = React.createRef();
+  modal = React.createRef();
 
-  componentDidMount() {
-    // this.openModal();
+  // componentDidMount() {
+  //   this.openModal();
+  // }
+
+  componentDidMount(){
+    this.loadData()
   }
-
+  loadData=()=>{
+    //load comment tag data
+  }
   renderContent = () => {
     return (
       <View style={s.content}>
@@ -37,7 +43,7 @@ export default class FixedContent extends React.Component {
               title={tag.title}
               titleStyle={styles.listItem}
               // bottomDivider={true}
-              onPress={()=>{console.log('select a good tag!')}}
+              onPress={()=>this.props.selectTag(this.props.studentId,tag._id)}
             />
           }else {
             return <></>
@@ -58,7 +64,7 @@ export default class FixedContent extends React.Component {
               title={tag.title}
               titleStyle={styles.listItem}
               // bottomDivider={true}
-              onPress={()=>{console.log('select a bad tag!')}}
+              onPress={()=>this.props.selectTag(this.props.studentId,tag._id)}
             />
           }else{
             return <></>
@@ -80,16 +86,33 @@ export default class FixedContent extends React.Component {
     );
   }
 
+
   onClosed = () => {
-    // Navigation.dismissOverlay(this.props.componentId);
-    this.props.onClosed()
+    const { onClosed } = this.props;
+
+    if (onClosed) {
+      onClosed();
+    }
   }
 
+  openModal = () => {
+    if (this.modal.current) {
+      this.modal.current.open();
+    }
+  }
+
+  // onClosed = () => {
+  //   // Navigation.dismissOverlay(this.props.componentId);
+  //   this.props.onClosed()
+  // }
+
   render() {
+    // console.log("here is the commentTags modal, with student Id")
+    // console.log(this.props.studentId)
     return (
       <Modalize
-        ref={(e)=>this.props.setModalRef(e)}
-        // onClosed={this.onClosed}
+        ref={this.modal}
+        onClosed={this.onClosed}
         adjustToContentHeight
       >
         {this.renderContent()}

@@ -1,71 +1,71 @@
 [
     {
-        "id": "1",
+        "_id": "1",
         "type": "good",
         "title": "听讲认真"       
     },
     {
-        "id": "2",
+        "_id": "2",
         "type": "good",
         "title": "参与度高"       
     },
     {
-        "id": "3",
+        "_id": "3",
         "type": "good",
         "title": "笔记认真"       
     },
     {
-        "id": "4",
+        "_id": "4",
         "type": "good",
         "title": "专注度高"       
     },
     {
-        "id": "5",
+        "_id": "5",
         "type": "good",
         "title": "积极主动"       
     },
     {
-        "id": "6",
+        "_id": "6",
         "type": "good",
         "title": "思考认真"       
     },
     {
-        "id": "7",
+        "_id": "7",
         "type": "good",
         "title": "踊跃发言"       
     },
     {
-        "id": "8",
+        "_id": "8",
         "type": "bad",
         "title": "开小差"       
     },
     {
-        "id": "9",
+        "_id": "9",
         "type": "bad",
         "title": "不做笔记"       
     },
     {
-        "id": "10",
+        "_id": "10",
         "type": "bad",
         "title": "说小话"       
     },
     {
-        "id": "11",
+        "_id": "11",
         "type": "bad",
         "title": "参与度低"       
     },
     {
-        "id": "12",
+        "_id": "12",
         "type": "bad",
         "title": "不专注"       
     },
     {
-        "id": "13",
+        "_id": "13",
         "type": "bad",
         "title": "不太主动"       
     },
     {
-        "id": "14",
+        "_id": "14",
         "type": "bad",
         "title": "不配合"       
     }
